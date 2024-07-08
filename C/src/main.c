@@ -71,13 +71,15 @@ void calculate_pagerank(double pagerank[])
     {
         double iteration_start = omp_get_wtime();
  
-        for(int i = 0; i < GRAPH_ORDER; i++)
-        {
-            new_pagerank[i] = 0.0;
-        }
+        // for(int i = 0; i < GRAPH_ORDER; i++)
+        // {
+        // }
  
+        diff = 0.0;
 		for(int i = 0; i < GRAPH_ORDER; i++)
         {
+            new_pagerank[i] = 0.0;
+
 			for(int j = 0; j < GRAPH_ORDER; j++)
             {
 				if (adjacency_matrix[j][i] == 1.0)
@@ -94,26 +96,28 @@ void calculate_pagerank(double pagerank[])
 					new_pagerank[i] += pagerank[j] / (double)outdegree;
 				}
 			}
+
+            new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
+            
+            diff += fabs(new_pagerank[i] - pagerank[i]);
+
+            pagerank[i] = new_pagerank[i];
 		}
  
-        for(int i = 0; i < GRAPH_ORDER; i++)
-        {
-            new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
-        }
+        // for(int i = 0; i < GRAPH_ORDER; i++)
+        // {
+        // }
  
-        diff = 0.0;
-        for(int i = 0; i < GRAPH_ORDER; i++)
-        {
-            diff += fabs(new_pagerank[i] - pagerank[i]);
-        }
+        // for(int i = 0; i < GRAPH_ORDER; i++)
+        // {
+        // }
         max_diff = (max_diff < diff) ? diff : max_diff;
         total_diff += diff;
         min_diff = (min_diff > diff) ? diff : min_diff;
  
-        for(int i = 0; i < GRAPH_ORDER; i++)
-        {
-            pagerank[i] = new_pagerank[i];
-        }
+        // for(int i = 0; i < GRAPH_ORDER; i++)
+        // {
+        // }
             
         double pagerank_total = 0.0;
         for(int i = 0; i < GRAPH_ORDER; i++)
