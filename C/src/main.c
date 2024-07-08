@@ -75,7 +75,6 @@ void calculate_pagerank(double pagerank[])
         // {
         // }
  
-        diff = 0.0;
 		for(int i = 0; i < GRAPH_ORDER; i++)
         {
             new_pagerank[i] = 0.0;
@@ -96,28 +95,26 @@ void calculate_pagerank(double pagerank[])
 					new_pagerank[i] += pagerank[j] / (double)outdegree;
 				}
 			}
-
-            new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
-            
-            diff += fabs(new_pagerank[i] - pagerank[i]);
-
-            pagerank[i] = new_pagerank[i];
 		}
  
-        // for(int i = 0; i < GRAPH_ORDER; i++)
-        // {
-        // }
+        for(int i = 0; i < GRAPH_ORDER; i++)
+        {
+            new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
+        }
  
-        // for(int i = 0; i < GRAPH_ORDER; i++)
-        // {
-        // }
+        diff = 0.0;
+        for(int i = 0; i < GRAPH_ORDER; i++)
+        {
+            diff += fabs(new_pagerank[i] - pagerank[i]);
+        }
         max_diff = (max_diff < diff) ? diff : max_diff;
         total_diff += diff;
         min_diff = (min_diff > diff) ? diff : min_diff;
  
-        // for(int i = 0; i < GRAPH_ORDER; i++)
-        // {
-        // }
+        for(int i = 0; i < GRAPH_ORDER; i++)
+        {
+            pagerank[i] = new_pagerank[i];
+        }
             
         double pagerank_total = 0.0;
         for(int i = 0; i < GRAPH_ORDER; i++)
