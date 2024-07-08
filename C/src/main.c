@@ -85,6 +85,8 @@ void calculate_pagerank(double pagerank[]) {
                "each team\n",
                nteams, nthreads);
       }
+    }
+
       for (int i = 0; i < GRAPH_ORDER; i++) {
         new_pagerank[i] = 0.0;
 
@@ -105,7 +107,6 @@ void calculate_pagerank(double pagerank[]) {
 
         diff += fabs(new_pagerank[i] - pagerank[i]);
       }
-    }
     // for(int i = 0; i < GRAPH_ORDER; i++)
     // {
     // }
