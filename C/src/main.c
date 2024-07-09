@@ -57,11 +57,12 @@ void calculate_pagerank(double pagerank[]) {
   double elapsed = omp_get_wtime() - start;
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
+
   for (int i = 0; i < GRAPH_ORDER; i++) {
     new_pagerank[i] = 0.0;
   }
 
-#pragma omp target
+  #pragma omp target
   {
     if (omp_is_initial_device()) {
 
@@ -89,6 +90,7 @@ void calculate_pagerank(double pagerank[]) {
     // {
     // }
 // #pragma omp target teams distribute parallel for schedule(static)
+    #pragma omp target
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
 
