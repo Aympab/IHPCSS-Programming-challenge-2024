@@ -31,9 +31,9 @@ double min_diff = 1.0;
 double total_diff = 0.0;
 
 void initialize_graph(void) {
-  #pragma omp teams distribute
+//   #pragma omp teams distribute
+  #pragma omp parallel for shared(adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       adjacency_matrix[i][j] = 0.0;
     }
@@ -134,9 +134,9 @@ void generate_nice_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-#pragma omp teams distribute
+// #pragma omp teams distribute
+#pragma omp parallel for shared(adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       int source = i;
       int destination = j;
@@ -155,9 +155,8 @@ void generate_sneaky_graph(void) {
   printf("Generate a graph for the challenge (i.e.: a sneaky graph :P )\n");
   double start = omp_get_wtime();
   initialize_graph();
-#pragma omp teams distribute
+#pragma omp parallel for shared(adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER - i; j++) {
       int source = i;
       int destination = j;
