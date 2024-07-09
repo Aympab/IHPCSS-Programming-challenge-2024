@@ -153,24 +153,21 @@ int main(int argc, char *argv[]) {
     new_pagerank[i] = 0.0;
   }
 
-  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
-  #pragma omp target update map(to:adjacency_matrix, pagerank, new_pagerank)
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
   // we stop.
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-    #pragma omp target parallel for shared(adjacency_matrix)
+    // #pragma omp target parallel for shared(adjacency_matrix) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
 
-      //shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i])
-    #pragma omp target teams distribute //map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i])
-      // #pragma omp parallel for 
+      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank,
+      // pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
@@ -187,12 +184,10 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    #pragma omp target parallel for shared(new_pagerank)
+    // #pragma omp target parallel for shared(new_pagerank) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
-
-    #pragma omp target update map(from:new_pagerank, adjacency_matrix, pagerank)
 
     // probably should do on the host
     diff = 0.0;
@@ -215,16 +210,12 @@ int main(int argc, char *argv[]) {
       pagerank[i] = new_pagerank[i];
     }
 
-    // #pragma omp target update map(from:pagerank)
-
     double pagerank_total = 0.0;
     // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total)
     // schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
-
-    // #pragma omp target update map(to:pagerank_total)
     if (fabs(pagerank_total - 1.0) >= 1E-12) {
       printf(
           "[ERROR] Iteration %zu: sum of all pageranks is not 1 but %.12f.\n",
@@ -240,8 +231,6 @@ int main(int argc, char *argv[]) {
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
 // =============================================================================
 // =============================================================================
-
-  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
 
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
