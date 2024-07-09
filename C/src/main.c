@@ -8,9 +8,9 @@
 #include <math.h>
 #include <mpi.h>
 #include <omp.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 /// The number of vertices in the graph.
 #define GRAPH_ORDER 1000
@@ -67,29 +67,25 @@ void calculate_pagerank(double pagerank[]) {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-    #pragma omp target
-    {
-        for (int i = 0; i < GRAPH_ORDER; i++) {
-        new_pagerank[i] = 0.0;
-        }
+    for (int i = 0; i < GRAPH_ORDER; i++) {
+      new_pagerank[i] = 0.0;
     }
 
-    #pragma omp target
-    {
-        for (int i = 0; i < GRAPH_ORDER; i++) {
-        for (int j = 0; j < GRAPH_ORDER; j++) {
-            if (adjacency_matrix[j][i] == 1.0) {
-            int outdegree = 0;
+#pragma omp target teams distribute map(tofrom : adjacency_matrix)
+    for (int i = 0; i < GRAPH_ORDER; i++) {
+#pragma omp parallel for shared(adjacency_matrix)
+      for (int j = 0; j < GRAPH_ORDER; j++) {
+        if (adjacency_matrix[j][i] == 1.0) {
+          int outdegree = 0;
 
-            for (int k = 0; k < GRAPH_ORDER; k++) {
-                if (adjacency_matrix[j][k] == 1.0) {
-                outdegree++;
-                }
+          for (int k = 0; k < GRAPH_ORDER; k++) {
+            if (adjacency_matrix[j][k] == 1.0) {
+              outdegree++;
             }
-            new_pagerank[i] += pagerank[j] / (double)outdegree;
-            }
+          }
+          new_pagerank[i] += pagerank[j] / (double)outdegree;
         }
-        }
+      }
     }
 
     for (int i = 0; i < GRAPH_ORDER; i++) {
@@ -168,7 +164,7 @@ void generate_sneaky_graph(void) {
 
 int main(int argc, char *argv[]) {
   bool sneaky = false;
-  if (argc>1){
+  if (argc > 1) {
     sneaky = true;
   }
 
@@ -182,10 +178,9 @@ int main(int argc, char *argv[]) {
   // Get the time at the very start.
   double start = omp_get_wtime();
 
-  if(sneaky){
+  if (sneaky) {
     generate_sneaky_graph();
-  }
-  else{
+  } else {
     generate_nice_graph();
   }
 
