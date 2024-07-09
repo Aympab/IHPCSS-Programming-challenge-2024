@@ -79,7 +79,7 @@ void calculate_pagerank(double pagerank[]) {
       new_pagerank[i] = 0.0;
     }
 
-#pragma omp target teams distribute
+    #pragma omp target teams distribute shared(adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
     // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
