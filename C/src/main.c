@@ -60,23 +60,23 @@ void calculate_pagerank(double pagerank[]) {
     new_pagerank[i] = 0.0;
   }
 
-    #pragma omp target
-    {
-      if (omp_is_initial_device()) {
+#pragma omp target
+  {
+    if (omp_is_initial_device()) {
 
-        printf("Running on host\n");
+      printf("Running on host\n");
 
-      } else {
+    } else {
 
-        int nteams = omp_get_num_teams();
+      int nteams = omp_get_num_teams();
 
-        int nthreads = omp_get_num_threads();
+      int nthreads = omp_get_num_threads();
 
-        printf("Running on device with %d teams in total and %d threads in "
-               "each team\n",
-               nteams, nthreads);
-      }
+      printf("Running on device with %d teams in total and %d threads in "
+             "each team\n",
+             nteams, nthreads);
     }
+  }
 
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
@@ -87,27 +87,27 @@ void calculate_pagerank(double pagerank[]) {
     // for(int i = 0; i < GRAPH_ORDER; i++)
     // {
     // }
-      #pragma omp target teams distribute parallel for schedule(static)
-      for (int i = 0; i < GRAPH_ORDER; i++) {
-        new_pagerank[i] = 0.0;
+#pragma omp target teams distribute parallel for schedule(static)
+    for (int i = 0; i < GRAPH_ORDER; i++) {
+      new_pagerank[i] = 0.0;
 
-        for (int j = 0; j < GRAPH_ORDER; j++) {
-          if (adjacency_matrix[j][i] == 1.0) {
-            int outdegree = 0;
+      for (int j = 0; j < GRAPH_ORDER; j++) {
+        if (adjacency_matrix[j][i] == 1.0) {
+          int outdegree = 0;
 
-            for (int k = 0; k < GRAPH_ORDER; k++) {
-              if (adjacency_matrix[j][k] == 1.0) {
-                outdegree++;
-              }
+          for (int k = 0; k < GRAPH_ORDER; k++) {
+            if (adjacency_matrix[j][k] == 1.0) {
+              outdegree++;
             }
-            new_pagerank[i] += pagerank[j] / (double)outdegree;
           }
+          new_pagerank[i] += pagerank[j] / (double)outdegree;
         }
-
-        new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
-
-        diff += fabs(new_pagerank[i] - pagerank[i]);
       }
+
+      new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
+
+      diff += fabs(new_pagerank[i] - pagerank[i]);
+    }
     // for(int i = 0; i < GRAPH_ORDER; i++)
     // {
     // }
@@ -183,7 +183,12 @@ void generate_sneaky_graph(void) {
 }
 
 int main(int argc, char *argv[]) {
+  bool sneaky = false;
+
   // We do not need argc, this line silences potential compilation warnings.
+  if (argc > 1) {
+    sneaky = true;
+  }
   (void)argc;
   // We do not need argv, this line silences potential compilation warnings.
   (void)argv;
@@ -195,7 +200,12 @@ int main(int argc, char *argv[]) {
   // Get the time at the very start.
   double start = omp_get_wtime();
 
-  generate_nice_graph();
+  if(sneaky){
+    generate_sneaky_graph();
+  }
+  else{
+    generate_nice_graph();
+  }
 
   /// The array in which each vertex pagerank is stored.
   double pagerank[GRAPH_ORDER];
