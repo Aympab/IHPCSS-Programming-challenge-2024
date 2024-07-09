@@ -136,8 +136,8 @@ int main(int argc, char *argv[]) {
   double damping_value = (1.0 - DAMPING_FACTOR) / GRAPH_ORDER;
   double diff = 1.0;
   size_t iteration = 0;
-  double start = omp_get_wtime();
-  double elapsed = omp_get_wtime() - start;
+  double sstart = omp_get_wtime();
+  double elapsed = omp_get_wtime() - sstart;
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
 
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
     }
 
     double iteration_end = omp_get_wtime();
-    elapsed = omp_get_wtime() - start;
+    elapsed = omp_get_wtime() - sstart;
     iteration++;
     time_per_iteration = elapsed / iteration;
   }
