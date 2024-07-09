@@ -88,7 +88,7 @@ void calculate_pagerank(double pagerank[]) {
     // for(int i = 0; i < GRAPH_ORDER; i++)
     // {
     // }
-#pragma omp target teams distribute parallel for schedule(static)
+// #pragma omp target teams distribute parallel for schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
 
