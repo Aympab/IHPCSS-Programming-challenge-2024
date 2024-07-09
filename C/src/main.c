@@ -57,27 +57,8 @@ void calculate_pagerank(double pagerank[]) {
   double elapsed = omp_get_wtime() - start;
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
-
   for (int i = 0; i < GRAPH_ORDER; i++) {
     new_pagerank[i] = 0.0;
-  }
-
-  #pragma omp target
-  {
-    if (omp_is_initial_device()) {
-
-      printf("Running on host\n");
-
-    } else {
-
-      int nteams = omp_get_num_teams();
-
-      int nthreads = omp_get_num_threads();
-
-      printf("Running on device with %d teams in total and %d threads in "
-             "each team\n",
-             nteams, nthreads);
-    }
   }
 
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
@@ -86,14 +67,11 @@ void calculate_pagerank(double pagerank[]) {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-    // for(int i = 0; i < GRAPH_ORDER; i++)
-    // {
-    // }
-// #pragma omp target teams distribute parallel for schedule(static)
-    #pragma omp target
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
+    }
 
+    for (int i = 0; i < GRAPH_ORDER; i++) {
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
@@ -106,19 +84,16 @@ void calculate_pagerank(double pagerank[]) {
           new_pagerank[i] += pagerank[j] / (double)outdegree;
         }
       }
+    }
 
+    for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
+    }
 
+    diff = 0.0;
+    for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
-    // for(int i = 0; i < GRAPH_ORDER; i++)
-    // {
-    // }
-
-    // diff = 0.0;
-    // for(int i = 0; i < GRAPH_ORDER; i++)
-    // {
-    // }
     max_diff = (max_diff < diff) ? diff : max_diff;
     total_diff += diff;
     min_diff = (min_diff > diff) ? diff : min_diff;
@@ -187,12 +162,10 @@ void generate_sneaky_graph(void) {
 
 int main(int argc, char *argv[]) {
   bool sneaky = false;
-
-  // We do not need argc, this line silences potential compilation warnings.
-  if (argc > 1) {
+  if (argc>1){
     sneaky = true;
   }
-  (void)argc;
+
   // We do not need argv, this line silences potential compilation warnings.
   (void)argv;
 
