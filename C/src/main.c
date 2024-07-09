@@ -153,6 +153,8 @@ int main(int argc, char *argv[]) {
     new_pagerank[i] = 0.0;
   }
 
+  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  #pragma omp target update map(to:new_pagerank, adjacency_matrix, pagerank)
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
   // we stop.
@@ -189,6 +191,8 @@ int main(int argc, char *argv[]) {
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
+
+    #pragma omp target update map(from:new_pagerank, adjacency_matrix, pagerank)
 
     // probably should do on the host
     diff = 0.0;
