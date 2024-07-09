@@ -166,7 +166,7 @@ int main(int argc, char *argv[]) {
 
     #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank,
+      #pragma omp parallel for private(j, k)
       // pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
