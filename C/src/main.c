@@ -156,6 +156,10 @@ int main(int argc, char *argv[]) {
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
   // we stop.
+#pragma omp target data map(tofrom : adjacency_matrix, new_pagerank, pagerank, \
+                                diff, damping_value, max_diff, min_diff,       \
+                                total_diff)
+  {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
@@ -166,7 +170,7 @@ int main(int argc, char *argv[]) {
 
     #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      #pragma omp parallel for firstprivate(i)
+      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank,
       // pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
@@ -227,7 +231,7 @@ int main(int argc, char *argv[]) {
     iteration++;
     time_per_iteration = elapsed / iteration;
   }
-
+}
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
 // =============================================================================
 // =============================================================================
