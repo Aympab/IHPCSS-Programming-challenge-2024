@@ -67,23 +67,29 @@ void calculate_pagerank(double pagerank[]) {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-    for (int i = 0; i < GRAPH_ORDER; i++) {
-      new_pagerank[i] = 0.0;
+    #pragma omp target
+    {
+        for (int i = 0; i < GRAPH_ORDER; i++) {
+        new_pagerank[i] = 0.0;
+        }
     }
 
-    for (int i = 0; i < GRAPH_ORDER; i++) {
-      for (int j = 0; j < GRAPH_ORDER; j++) {
-        if (adjacency_matrix[j][i] == 1.0) {
-          int outdegree = 0;
+    #pragma omp target
+    {
+        for (int i = 0; i < GRAPH_ORDER; i++) {
+        for (int j = 0; j < GRAPH_ORDER; j++) {
+            if (adjacency_matrix[j][i] == 1.0) {
+            int outdegree = 0;
 
-          for (int k = 0; k < GRAPH_ORDER; k++) {
-            if (adjacency_matrix[j][k] == 1.0) {
-              outdegree++;
+            for (int k = 0; k < GRAPH_ORDER; k++) {
+                if (adjacency_matrix[j][k] == 1.0) {
+                outdegree++;
+                }
             }
-          }
-          new_pagerank[i] += pagerank[j] / (double)outdegree;
+            new_pagerank[i] += pagerank[j] / (double)outdegree;
+            }
         }
-      }
+        }
     }
 
     for (int i = 0; i < GRAPH_ORDER; i++) {
