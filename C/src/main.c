@@ -69,11 +69,13 @@ void calculate_pagerank(double pagerank[]) {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
+  #pragma omp parallel for shared(adjacency_matrix)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
 
 // #pragma omp target teams distribute map(tofrom : adjacency_matrix)
+  #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
 // #pragma omp parallel for shared(adjacency_matrix) private(outdegree)
       for (int j = 0; j < GRAPH_ORDER; j++) {
@@ -90,11 +92,13 @@ void calculate_pagerank(double pagerank[]) {
       }
     }
 
+  #pragma omp parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
 
     diff = 0.0;
+  #pragma omp parallel for shared(adjacency_matrix) reduction(+:diff)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
@@ -102,11 +106,13 @@ void calculate_pagerank(double pagerank[]) {
     total_diff += diff;
     min_diff = (min_diff > diff) ? diff : min_diff;
 
+  #pragma omp parallel for shared(adjacency_matrix, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
 
     double pagerank_total = 0.0;
+  #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
@@ -202,6 +208,7 @@ int main(int argc, char *argv[]) {
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
   double sum_ranks = 0.0;
+#pragma omp parallel for shared(pagerank) reduction(+:sum_ranks)
   for (int i = 0; i < GRAPH_ORDER; i++) {
     if (i % 100 == 0) {
       printf("PageRank of vertex %d: %.6f\n", i, pagerank[i]);
