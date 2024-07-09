@@ -241,6 +241,8 @@ int main(int argc, char *argv[]) {
 // =============================================================================
 // =============================================================================
 
+  #pragma omp target enter data exit map(delete:adjacency_matrix, new_pagerank, pagerank)
+
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
