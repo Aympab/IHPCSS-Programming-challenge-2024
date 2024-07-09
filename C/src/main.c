@@ -61,7 +61,7 @@ void calculate_pagerank(double pagerank[]) {
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
 
-  #pragma omp target enter data map(alloc:new_pagerank) map(tofrom:diff) map(to:damping_value)
+  #pragma omp target enter data map(alloc:new_pagerank) map(to:diff) map(to:damping_value)
 
   #pragma omp target parallel for map(to:initial_rank) shared(pagerank)
   for (int i = 0; i < GRAPH_ORDER; i++) {
@@ -151,7 +151,7 @@ void generate_nice_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-#pragma omp teams distribute
+#pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
     #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER; j++) {
@@ -173,7 +173,7 @@ void generate_sneaky_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-#pragma omp teams distribute
+#pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
     #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER - i; j++) {
