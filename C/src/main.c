@@ -25,12 +25,9 @@
  * will be 1.0. The absence of edge is represented with value 0.0.
  * Redundant edges are still represented with value 1.0.
  */
-double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER];
-double max_diff = 0.0;
-double min_diff = 1.0;
-double total_diff = 0.0;
 
-void initialize_graph(void) {
+
+void initialize_graph(double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER]) {
   #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
     #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
@@ -44,7 +41,7 @@ void initialize_graph(void) {
  * @brief Calculates the pagerank of all vertices in the graph.
  * @param pagerank The array in which store the final pageranks.
  */
-void calculate_pagerank(double pagerank[]) {
+void calculate_pagerank(double pagerank[], double *max_diff, double *min_diff, double *total_diff, double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER]) {
   double initial_rank = 1.0 / GRAPH_ORDER;
 
   // Initialise all vertices to 1/n.
@@ -112,9 +109,9 @@ void calculate_pagerank(double pagerank[]) {
 
     #pragma omp target update map(from:diff)
     // {
-    max_diff = (max_diff < diff) ? diff : max_diff;
-    total_diff += diff;
-    min_diff = (min_diff > diff) ? diff : min_diff;
+    *max_diff = (*max_diff < diff) ? diff : *max_diff;
+    *total_diff += diff;
+    *min_diff = (*min_diff > diff) ? diff : *min_diff;
     // }
 
   #pragma omp parallel for shared(adjacency_matrix, pagerank) schedule(static)
@@ -145,11 +142,11 @@ void calculate_pagerank(double pagerank[]) {
 /**
  * @brief Populates the edges in the graph for testing.
  **/
-void generate_nice_graph(void) {
+void generate_nice_graph(double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER]) {
   printf("Generate a graph for testing purposes (i.e.: a nice and conveniently "
          "designed graph :) )\n");
   double start = omp_get_wtime();
-  initialize_graph();
+  initialize_graph(adjacency_matrix);
 
 #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
@@ -168,10 +165,10 @@ void generate_nice_graph(void) {
 /**
  * @brief Populates the edges in the graph for the challenge.
  **/
-void generate_sneaky_graph(void) {
+void generate_sneaky_graph(double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER]) {
   printf("Generate a graph for the challenge (i.e.: a sneaky graph :P )\n");
   double start = omp_get_wtime();
-  initialize_graph();
+  initialize_graph(adjacency_matrix);
 
 #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
@@ -200,21 +197,26 @@ int main(int argc, char *argv[]) {
          "generate_sneaky_graph. If you intend to submit, your code will be "
          "timed on the sneaky graph, remember to try both.\n");
 
+    double adjacency_matrix[GRAPH_ORDER][GRAPH_ORDER];
+    double max_diff = 0.0;
+    double min_diff = 1.0;
+    double total_diff = 0.0;
+
   // Get the time at the very start.
   double start = omp_get_wtime();
 
   #pragma omp target enter data map(alloc:adjacency_matrix)
 
   if (sneaky) {
-    generate_sneaky_graph();
+    generate_sneaky_graph(adjacency_matrix);
   } else {
-    generate_nice_graph();
+    generate_nice_graph(adjacency_matrix);
   }
 
   /// The array in which each vertex pagerank is stored.
   double pagerank[GRAPH_ORDER];
   #pragma omp target enter data map(alloc:pagerank)
-  calculate_pagerank(pagerank);
+  calculate_pagerank(pagerank, &max_diff, &min_diff, &total_diff, adjacency_matrix);
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
