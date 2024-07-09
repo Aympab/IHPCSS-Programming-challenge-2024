@@ -31,9 +31,9 @@ double min_diff = 1.0;
 double total_diff = 0.0;
 
 void initialize_graph(void) {
-  #pragma omp target teams distribute
+  // #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
+    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       adjacency_matrix[i][j] = 0.0;
     }
@@ -48,7 +48,7 @@ void calculate_pagerank(double pagerank[]) {
   double initial_rank = 1.0 / GRAPH_ORDER;
 
   // Initialise all vertices to 1/n.
-  #pragma omp target parallel for map(to:initial_rank) shared(pagerank) schedule(static)
+  // #pragma omp target parallel for map(to:initial_rank) shared(pagerank) schedule(static)
   for (int i = 0; i < GRAPH_ORDER; i++) {
     pagerank[i] = initial_rank;
   }
@@ -61,9 +61,9 @@ void calculate_pagerank(double pagerank[]) {
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
 
-  #pragma omp target enter data map(alloc:new_pagerank) map(to:diff) map(to:damping_value)
+  // #pragma omp target enter data map(alloc:new_pagerank) map(to:diff) map(to:damping_value)
 
-  #pragma omp target parallel for map(to:initial_rank) shared(pagerank) schedule(static)
+  // #pragma omp target parallel for map(to:initial_rank) shared(pagerank) schedule(static)
   for (int i = 0; i < GRAPH_ORDER; i++) {
     new_pagerank[i] = 0.0;
   }
@@ -74,14 +74,14 @@ void calculate_pagerank(double pagerank[]) {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-  #pragma omp target parallel for shared(adjacency_matrix) schedule(static)
+  // #pragma omp target parallel for shared(adjacency_matrix) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
 
-#pragma omp target teams distribute
+// #pragma omp target teams distribute
     for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
+    // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
@@ -98,32 +98,32 @@ void calculate_pagerank(double pagerank[]) {
       }
     }
 
-  #pragma omp target parallel for shared(new_pagerank) schedule(static)
+  // #pragma omp target parallel for shared(new_pagerank) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
 
     //probably should do on the host
     diff = 0.0;
-    #pragma omp target parallel for shared(adjacency_matrix) reduction(+:diff) schedule(static)
+    // #pragma omp target parallel for shared(adjacency_matrix) reduction(+:diff) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
 
-    #pragma omp target update map(from:diff)
+    // #pragma omp target update map(from:diff)
     // {
     max_diff = (max_diff < diff) ? diff : max_diff;
     total_diff += diff;
     min_diff = (min_diff > diff) ? diff : min_diff;
     // }
 
-  #pragma omp parallel for shared(adjacency_matrix, pagerank) schedule(static)
+  // #pragma omp parallel for shared(adjacency_matrix, pagerank) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
 
     double pagerank_total = 0.0;
-  #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total) schedule(static)
+  // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
@@ -151,9 +151,9 @@ void generate_nice_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-#pragma omp target teams distribute
+// #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
+    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       int source = i;
       int destination = j;
@@ -173,9 +173,9 @@ void generate_sneaky_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-#pragma omp target teams distribute
+// #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
+    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i) schedule(static)
     for (int j = 0; j < GRAPH_ORDER - i; j++) {
       int source = i;
       int destination = j;
@@ -203,7 +203,7 @@ int main(int argc, char *argv[]) {
   // Get the time at the very start.
   double start = omp_get_wtime();
 
-  #pragma omp target enter data map(alloc:adjacency_matrix)
+  // #pragma omp target enter data map(alloc:adjacency_matrix)
 
   if (sneaky) {
     generate_sneaky_graph();
@@ -213,14 +213,14 @@ int main(int argc, char *argv[]) {
 
   /// The array in which each vertex pagerank is stored.
   double pagerank[GRAPH_ORDER];
-  #pragma omp target enter data map(alloc:pagerank)
+  // #pragma omp target enter data map(alloc:pagerank)
   calculate_pagerank(pagerank);
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
   double sum_ranks = 0.0;
 
-  #pragma omp target parallel for shared(pagerank) reduction(+:sum_ranks) schedule(static)
+  // #pragma omp target parallel for shared(pagerank) reduction(+:sum_ranks) schedule(static)
   for (int i = 0; i < GRAPH_ORDER; i++) {
     if (i % 100 == 0) {
       printf("PageRank of vertex %d: %.6f\n", i, pagerank[i]);
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
 
   printf("Total time taken: %.2f seconds.\n", end - start);
 
-  #pragma omp target exit data map(delete:adjacency_matrix, pagerank)
+  // #pragma omp target exit data map(delete:adjacency_matrix, pagerank)
 
   return 0;
 }
