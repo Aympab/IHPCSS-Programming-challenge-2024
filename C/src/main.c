@@ -154,14 +154,14 @@ int main(int argc, char *argv[]) {
   }
 
   #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
-  #pragma omp target update map(to:adjacency_matrix, pagerank)
+  #pragma omp target update map(to:adjacency_matrix, pagerank, new_pagerank)
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
   // we stop.
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
-    // #pragma omp target parallel for shared(adjacency_matrix) schedule(static)
+    #pragma omp target parallel for shared(adjacency_matrix)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // #pragma omp target parallel for shared(new_pagerank) schedule(static)
+    #pragma omp target parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
@@ -215,7 +215,8 @@ int main(int argc, char *argv[]) {
       pagerank[i] = new_pagerank[i];
     }
 
-    #pragma omp target update map(from:pagerank)
+    // #pragma omp target update map(from:pagerank)
+
     double pagerank_total = 0.0;
     // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total)
     // schedule(static)
