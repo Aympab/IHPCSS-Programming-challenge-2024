@@ -31,7 +31,9 @@ double min_diff = 1.0;
 double total_diff = 0.0;
 
 void initialize_graph(void) {
+  #pragma omp target teams distribute map(from:adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
+    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       adjacency_matrix[i][j] = 0.0;
     }
@@ -131,7 +133,10 @@ void generate_nice_graph(void) {
          "designed graph :) )\n");
   double start = omp_get_wtime();
   initialize_graph();
+
+#pragma omp target teams distribute map(from:adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
+    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       int source = i;
       int destination = j;
@@ -150,7 +155,9 @@ void generate_sneaky_graph(void) {
   printf("Generate a graph for the challenge (i.e.: a sneaky graph :P )\n");
   double start = omp_get_wtime();
   initialize_graph();
+#pragma omp target teams distribute map(from:adjacency_matrix)
   for (int i = 0; i < GRAPH_ORDER; i++) {
+    #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
     for (int j = 0; j < GRAPH_ORDER - i; j++) {
       int source = i;
       int destination = j;
@@ -178,6 +185,8 @@ int main(int argc, char *argv[]) {
   // Get the time at the very start.
   double start = omp_get_wtime();
 
+  #pragma omp target enter data map(alloc:adjacency_matrix)
+
   if (sneaky) {
     generate_sneaky_graph();
   } else {
@@ -185,7 +194,10 @@ int main(int argc, char *argv[]) {
   }
 
   /// The array in which each vertex pagerank is stored.
+
   double pagerank[GRAPH_ORDER];
+
+  #pragma omp target enter data map(alloc:pagerank)
   calculate_pagerank(pagerank);
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
@@ -203,6 +215,8 @@ int main(int argc, char *argv[]) {
   double end = omp_get_wtime();
 
   printf("Total time taken: %.2f seconds.\n", end - start);
+
+  #pragma omp target exit data map(delete:adjacency_matrix, pagerank)
 
   return 0;
 }
