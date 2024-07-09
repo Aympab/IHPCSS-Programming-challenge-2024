@@ -10,6 +10,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 /// The number of vertices in the graph.
 #define GRAPH_ORDER 1000
