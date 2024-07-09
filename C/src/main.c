@@ -76,9 +76,9 @@ void calculate_pagerank(double pagerank[]) {
 
 // #pragma omp target teams distribute map(tofrom : adjacency_matrix)
   #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank)
+      for (int j = 0; j < GRAPH_ORDER; j++) {
     for (int i = 0; i < GRAPH_ORDER; i++) {
 // #pragma omp parallel for shared(adjacency_matrix) private(outdegree)
-      for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
 
