@@ -41,13 +41,92 @@ void initialize_graph(void) {
   }
 }
 
+// /**
+//  * @brief Calculates the pagerank of all vertices in the graph.
+//  * @param pagerank The array in which store the final pageranks.
+//  */
+// void calculate_pagerank(double pagerank[]) {
+
+// }
+
 /**
- * @brief Calculates the pagerank of all vertices in the graph.
- * @param pagerank The array in which store the final pageranks.
- */
-void calculate_pagerank(double pagerank[]) {
+ * @brief Populates the edges in the graph for testing.
+ **/
+void generate_nice_graph(void) {
+  printf("Generate a graph for testing purposes (i.e.: a nice and conveniently "
+         "designed graph :) )\n");
+  double start = omp_get_wtime();
+  initialize_graph();
+
+  // #pragma omp target teams distribute
+  for (int i = 0; i < GRAPH_ORDER; i++) {
+    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
+    // schedule(static)
+    for (int j = 0; j < GRAPH_ORDER; j++) {
+      int source = i;
+      int destination = j;
+      if (i != j) {
+        adjacency_matrix[source][destination] = 1.0;
+      }
+    }
+  }
+  printf("%.2f seconds to generate the graph.\n", omp_get_wtime() - start);
+}
+
+/**
+ * @brief Populates the edges in the graph for the challenge.
+ **/
+void generate_sneaky_graph(void) {
+  printf("Generate a graph for the challenge (i.e.: a sneaky graph :P )\n");
+  double start = omp_get_wtime();
+  initialize_graph();
+
+  // #pragma omp target teams distribute
+  for (int i = 0; i < GRAPH_ORDER; i++) {
+    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
+    // schedule(static)
+    for (int j = 0; j < GRAPH_ORDER - i; j++) {
+      int source = i;
+      int destination = j;
+      if (i != j) {
+        adjacency_matrix[source][destination] = 1.0;
+      }
+    }
+  }
+  printf("%.2f seconds to generate the graph.\n", omp_get_wtime() - start);
+}
+
+int main(int argc, char *argv[]) {
+  bool sneaky = false;
+  if (argc > 1) {
+    sneaky = true;
+  }
+
+  // We do not need argv, this line silences potential compilation warnings.
+  (void)argv;
+
+  printf("This program has two graph generators: generate_nice_graph and "
+         "generate_sneaky_graph. If you intend to submit, your code will be "
+         "timed on the sneaky graph, remember to try both.\n");
+
+  // Get the time at the very start.
+  double start = omp_get_wtime();
+
+  // #pragma omp target enter data map(alloc:adjacency_matrix)
+
+  if (sneaky) {
+    generate_sneaky_graph();
+  } else {
+    generate_nice_graph();
+  }
+
+// =============================================================================
+// Main algorithm
+// calculate_pagerank(pagerank);
+// =============================================================================
+  /// The array in which each vertex pagerank is stored.
+  double pagerank[GRAPH_ORDER];
   // #pragma omp target enter data map(alloc:pagerank)
-  // calculate_pagerank(pagerank);
   double initial_rank = 1.0 / GRAPH_ORDER;
 
   // Initialise all vertices to 1/n.
@@ -150,82 +229,9 @@ void calculate_pagerank(double pagerank[]) {
   }
 
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
-}
+// =============================================================================
+// =============================================================================
 
-/**
- * @brief Populates the edges in the graph for testing.
- **/
-void generate_nice_graph(void) {
-  printf("Generate a graph for testing purposes (i.e.: a nice and conveniently "
-         "designed graph :) )\n");
-  double start = omp_get_wtime();
-  initialize_graph();
-
-  // #pragma omp target teams distribute
-  for (int i = 0; i < GRAPH_ORDER; i++) {
-    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
-    // schedule(static)
-    for (int j = 0; j < GRAPH_ORDER; j++) {
-      int source = i;
-      int destination = j;
-      if (i != j) {
-        adjacency_matrix[source][destination] = 1.0;
-      }
-    }
-  }
-  printf("%.2f seconds to generate the graph.\n", omp_get_wtime() - start);
-}
-
-/**
- * @brief Populates the edges in the graph for the challenge.
- **/
-void generate_sneaky_graph(void) {
-  printf("Generate a graph for the challenge (i.e.: a sneaky graph :P )\n");
-  double start = omp_get_wtime();
-  initialize_graph();
-
-  // #pragma omp target teams distribute
-  for (int i = 0; i < GRAPH_ORDER; i++) {
-    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
-    // schedule(static)
-    for (int j = 0; j < GRAPH_ORDER - i; j++) {
-      int source = i;
-      int destination = j;
-      if (i != j) {
-        adjacency_matrix[source][destination] = 1.0;
-      }
-    }
-  }
-  printf("%.2f seconds to generate the graph.\n", omp_get_wtime() - start);
-}
-
-int main(int argc, char *argv[]) {
-  bool sneaky = false;
-  if (argc > 1) {
-    sneaky = true;
-  }
-
-  // We do not need argv, this line silences potential compilation warnings.
-  (void)argv;
-
-  printf("This program has two graph generators: generate_nice_graph and "
-         "generate_sneaky_graph. If you intend to submit, your code will be "
-         "timed on the sneaky graph, remember to try both.\n");
-
-  // Get the time at the very start.
-  double start = omp_get_wtime();
-
-  // #pragma omp target enter data map(alloc:adjacency_matrix)
-
-  if (sneaky) {
-    generate_sneaky_graph();
-  } else {
-    generate_nice_graph();
-  }
-
-  /// The array in which each vertex pagerank is stored.
-  double pagerank[GRAPH_ORDER];
-  calculate_pagerank(pagerank);
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
