@@ -165,10 +165,10 @@ int main(int argc, char *argv[]) {
     }
 
       //shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i])
-    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank) shared(adjacency_matrix, new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i])
-      #pragma omp parallel for shared(adjacency_matrix, new_pagerank) reduction(+:new_pagerank[i])
+      #pragma omp parallel for 
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
