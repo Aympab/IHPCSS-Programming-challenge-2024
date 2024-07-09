@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
 
-    #pragma omp target update map(from:new_pagerank, adjacency_matrix, pagerank)
+    // #pragma omp target update map(from:new_pagerank, adjacency_matrix, pagerank)
 
     // probably should do on the host
     diff = 0.0;
