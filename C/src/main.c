@@ -163,7 +163,7 @@ int main(int argc, char *argv[]) {
 
     // int outdegrees[GRAPH_ORDER];
 
-    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+    #pragma omp target teams distribute parallel for map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) private(j) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
