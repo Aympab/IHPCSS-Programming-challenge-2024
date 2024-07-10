@@ -247,12 +247,13 @@ int main(int argc, char *argv[]) {
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
-  double sum_ranks = 0.0;
 
   // #pragma omp target parallel for shared(pagerank) reduction(+:sum_ranks)
 
-  for (int i = 0; i < GRAPH_ORDER; i++) {
   #pragma omp target update from(pagerank[0:GRAPH_ORDER])
+
+  double sum_ranks = 0.0;
+  for (int i = 0; i < GRAPH_ORDER; i++) {
     if (i % 100 == 0) {
       printf("PageRank of vertex %d: %.6f\n", i, pagerank[i]);
     }
