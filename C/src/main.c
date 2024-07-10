@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
     // ===========
     // ON HOST
     diff = 0.0;
-    // #pragma omp target parallel for shared(adjacency_matrix) reduction(+:diff) schedule(static)
+    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank) map(tofrom:diff) reduction(+:diff)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
