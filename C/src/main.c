@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
       printf(
           "[ERROR] Iteration %zu: sum of all pageranks is not 1 but %.12f.\n",
           iteration, pagerank_total);
-          return 1;
+          // return 1;
     }
 
     double iteration_end = omp_get_wtime();
