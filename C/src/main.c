@@ -153,6 +153,11 @@ int main(int argc, char *argv[]) {
 // #pragma omp target data map(tofrom : adjacency_matrix, new_pagerank, pagerank, \
 //                                 diff, damping_value, max_diff, min_diff,       \
 //                                 total_diff)
+
+  // #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  //ADD NO WAIT TO THE UPDATE
+  // #pragma omp u 
+
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
@@ -167,9 +172,9 @@ int main(int argc, char *argv[]) {
 
     // int outdegrees[GRAPH_ORDER];
 
-    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank) num_teams(GRAPH_ORDER)
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
+      #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) private(j) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
