@@ -157,19 +157,17 @@ int main(int argc, char *argv[]) {
     
     //=========
     // On DEVICE
-    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank) //map(tofrom:new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
 
-    #pragma omp target teams distribute parallel for map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+    #pragma omp target teams distribute parallel for //map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) private(j) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
 
-          // #pragma omp parallel for shared(adjacency_matrix) reduction(+:outdegree)
           for (int k = 0; k < GRAPH_ORDER; k++) {
             if (adjacency_matrix[j][k] == 1.0) {
               outdegree++;
@@ -183,7 +181,7 @@ int main(int argc, char *argv[]) {
     // #pragma omp target update from(new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
 
     // #pragma omp target teams distribute parallel for shared(new_pagerank)
-    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank) //map(tofrom:new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
@@ -191,7 +189,7 @@ int main(int argc, char *argv[]) {
     // ===========
     // ON HOST
     diff = 0.0;
-    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank) map(tofrom:diff) reduction(+:diff)
+    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank) reduction(+:diff) // map(tofrom:diff)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
