@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
 
-          #pragma omp parallel for shared(adjacency_matrix) reduction(+:outdegree)
+          #pragma omp parallel for
           for (int k = 0; k < GRAPH_ORDER; k++) {
             if (adjacency_matrix[j][k] == 1.0) {
               outdegree++;
