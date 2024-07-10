@@ -161,9 +161,6 @@ int main(int argc, char *argv[]) {
       new_pagerank[i] = 0.0;
     }
 
-
-    // int outdegrees[GRAPH_ORDER];
-
     #pragma omp target teams distribute parallel for map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) private(j) reduction(+:new_pagerank[i]) schedule(static)
@@ -198,17 +195,14 @@ int main(int argc, char *argv[]) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
 
-    // #pragma omp target update map(from:diff)
-    // {
     max_diff = (max_diff < diff) ? diff : max_diff;
     total_diff += diff;
     min_diff = (min_diff > diff) ? diff : min_diff;
-    // }
 
 
     // ===========
     // ON HOST or DEVICE??
-    // #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
