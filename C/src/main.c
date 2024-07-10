@@ -144,17 +144,8 @@ int main(int argc, char *argv[]) {
   double time_per_iteration = 0;
   double new_pagerank[GRAPH_ORDER];
 
-  // #pragma omp target enter data map(alloc:new_pagerank) map(to:diff)
-  // map(to:damping_value)
 
-  // #pragma omp target parallel for map(to:initial_rank) shared(pagerank)
-  // schedule(static)
-
-// #pragma omp target data map(tofrom : adjacency_matrix, new_pagerank, pagerank, \
-//                                 diff, damping_value, max_diff, min_diff,       \
-//                                 total_diff)
-
-  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  // #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
   //ADD NO WAIT TO THE UPDATE
   // #pragma omp u 
 
@@ -165,7 +156,7 @@ int main(int argc, char *argv[]) {
     
     //=========
     // On DEVICE
-    #pragma omp target teams distribute parallel for shared(new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
