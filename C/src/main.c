@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
   double new_pagerank[GRAPH_ORDER];
 
 
-  // #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
   //ADD NO WAIT TO THE UPDATE
   // #pragma omp u 
 
@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
     time_per_iteration = elapsed / iteration;
   }
 
-  // #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
+  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
 
 
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
