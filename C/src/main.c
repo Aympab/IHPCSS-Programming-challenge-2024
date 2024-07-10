@@ -149,9 +149,10 @@ int main(int argc, char *argv[]) {
 
   // #pragma omp target parallel for map(to:initial_rank) shared(pagerank)
   // schedule(static)
-  for (int i = 0; i < GRAPH_ORDER; i++) {
-    new_pagerank[i] = 0.0;
-  }
+  // //Do I really need this?
+  // for (int i = 0; i < GRAPH_ORDER; i++) {
+  //   new_pagerank[i] = 0.0;
+  // }
 
   // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
   // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
@@ -159,11 +160,13 @@ int main(int argc, char *argv[]) {
 // #pragma omp target data map(tofrom : adjacency_matrix, new_pagerank, pagerank, \
 //                                 diff, damping_value, max_diff, min_diff,       \
 //                                 total_diff)
-  {
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
 
     // #pragma omp target parallel for shared(adjacency_matrix) schedule(static)
+    
+    //=========
+    // On DEVICE
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
@@ -178,11 +181,9 @@ int main(int argc, char *argv[]) {
 
           for (int k = 0; k < GRAPH_ORDER; k++) {
             if (adjacency_matrix[j][k] == 1.0) {
-              //   #pragma omp critical
               outdegree++;
             }
           }
-          //   #pragma omp critical
           new_pagerank[i] += pagerank[j] / (double)outdegree;
         }
       }
@@ -193,7 +194,8 @@ int main(int argc, char *argv[]) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
 
-    // probably should do on the host
+    // ===========
+    // ON HOST
     diff = 0.0;
     // #pragma omp target parallel for shared(adjacency_matrix)
     // reduction(+:diff) schedule(static)
@@ -208,15 +210,18 @@ int main(int argc, char *argv[]) {
     min_diff = (min_diff > diff) ? diff : min_diff;
     // }
 
-    // #pragma omp parallel for shared(adjacency_matrix, pagerank)
-    // schedule(static)
+
+    // ===========
+    // ON HOST
+    // #pragma omp parallel for shared(adjacency_matrix, pagerank) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
 
+    // ===========
+    // ON HOST
     double pagerank_total = 0.0;
-    // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total)
-    // schedule(static)
+    // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
@@ -231,7 +236,7 @@ int main(int argc, char *argv[]) {
     iteration++;
     time_per_iteration = elapsed / iteration;
   }
-}
+
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
 // =============================================================================
 // =============================================================================
