@@ -165,8 +165,7 @@ int main(int argc, char *argv[]) {
     
     //=========
     // On DEVICE
-    #pragma omp target teams distribute
-    #pragma omp parallel for shared(new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
