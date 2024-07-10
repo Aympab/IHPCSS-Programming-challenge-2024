@@ -145,7 +145,9 @@ int main(int argc, char *argv[]) {
   double new_pagerank[GRAPH_ORDER];
 
 
-  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  #pragma omp target enter data map(alloc:adjacency_matrix[0:GRAPH_ORDER*GRAPH_ORDER], new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
+  #pragma omp target update to(pagerank[0:GRAPH_ORDER], adjacency_matrix[0:GRAPH_ORDER*GRAPH_ORDER])
+
   //ADD NO WAIT TO THE UPDATE
   // #pragma omp u 
 
