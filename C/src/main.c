@@ -129,6 +129,7 @@ int main(int argc, char *argv[]) {
   // Initialise all vertices to 1/n.
   // #pragma omp target parallel for map(to:initial_rank) shared(pagerank)
   // schedule(static)
+  #pragma omp parallel for shared(pagerank)
   for (int i = 0; i < GRAPH_ORDER; i++) {
     pagerank[i] = initial_rank;
   }
