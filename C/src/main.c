@@ -215,8 +215,8 @@ int main(int argc, char *argv[]) {
     // ===========
     // ON HOST
     double pagerank_total = 0.0;
-    // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total) schedule(static)
-    // #pragma omp target update from(pagerank[0:GRAPH_ORDER])
+
+    #pragma omp target teams distribute parallel for shared(pagerank) map(tofrom:pagerank_total) reduction(+:pagerank_total)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
