@@ -30,24 +30,20 @@ double max_diff = 0.0;
 double min_diff = 1.0;
 double total_diff = 0.0;
 
+
+// =============================================================================
+// =============================================================================
+// =============================================================================
+// =============================================================================
+// =============================================================================
+// HOST INIT FUNCTIONS
 void initialize_graph(void) {
-  // #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
-    // schedule(static)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       adjacency_matrix[i][j] = 0.0;
     }
   }
 }
-
-// /**
-//  * @brief Calculates the pagerank of all vertices in the graph.
-//  * @param pagerank The array in which store the final pageranks.
-//  */
-// void calculate_pagerank(double pagerank[]) {
-
-// }
 
 /**
  * @brief Populates the edges in the graph for testing.
@@ -58,10 +54,7 @@ void generate_nice_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-  // #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
-    // schedule(static)
     for (int j = 0; j < GRAPH_ORDER; j++) {
       int source = i;
       int destination = j;
@@ -81,10 +74,7 @@ void generate_sneaky_graph(void) {
   double start = omp_get_wtime();
   initialize_graph();
 
-  // #pragma omp target teams distribute
   for (int i = 0; i < GRAPH_ORDER; i++) {
-    // #pragma omp parallel for shared(adjacency_matrix) firstprivate(i)
-    // schedule(static)
     for (int j = 0; j < GRAPH_ORDER - i; j++) {
       int source = i;
       int destination = j;
@@ -95,7 +85,14 @@ void generate_sneaky_graph(void) {
   }
   printf("%.2f seconds to generate the graph.\n", omp_get_wtime() - start);
 }
+// =============================================================================
+// =============================================================================
 
+// =============================================================================
+// =============================================================================
+// =============================================================================
+// =============================================================================
+// MAIN
 int main(int argc, char *argv[]) {
   bool sneaky = false;
   if (argc > 1) {
@@ -148,8 +145,8 @@ int main(int argc, char *argv[]) {
   // #pragma omp target enter data map(alloc:adjacency_matrix[0:GRAPH_ORDER*GRAPH_ORDER], new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
   // #pragma omp target update to(pagerank[0:GRAPH_ORDER], adjacency_matrix[0:GRAPH_ORDER*GRAPH_ORDER])
 
-  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
-  #pragma omp target update to(pagerank, adjacency_matrix)
+  // #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  // #pragma omp target update to(pagerank, adjacency_matrix)
 
   while (elapsed < MAX_TIME && (elapsed + time_per_iteration) < MAX_TIME) {
     double iteration_start = omp_get_wtime();
@@ -158,7 +155,7 @@ int main(int argc, char *argv[]) {
     
     //=========
     // On DEVICE
-    #pragma omp target teams distribute parallel for shared(new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
@@ -166,7 +163,7 @@ int main(int argc, char *argv[]) {
 
     // int outdegrees[GRAPH_ORDER];
 
-    #pragma omp target teams distribute// map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) private(j) reduction(+:new_pagerank[i]) schedule(static)
       for (int j = 0; j < GRAPH_ORDER; j++) {
@@ -194,8 +191,7 @@ int main(int argc, char *argv[]) {
     // ===========
     // ON HOST
     diff = 0.0;
-    // #pragma omp target parallel for shared(adjacency_matrix)
-    // reduction(+:diff) schedule(static)
+    // #pragma omp target parallel for shared(adjacency_matrix) reduction(+:diff) schedule(static)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
@@ -252,7 +248,7 @@ int main(int argc, char *argv[]) {
 
   // #pragma omp target parallel for shared(pagerank) reduction(+:sum_ranks)
 
-  #pragma omp target update from(pagerank[0:GRAPH_ORDER])
+  // #pragma omp target update from(pagerank[0:GRAPH_ORDER])
 
   double sum_ranks = 0.0;
   for (int i = 0; i < GRAPH_ORDER; i++) {
@@ -271,7 +267,7 @@ int main(int argc, char *argv[]) {
   // #pragma omp target exit data map(delete:adjacency_matrix, pagerank)
 
 
-  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
+  // #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
 
   return 0;
 }
