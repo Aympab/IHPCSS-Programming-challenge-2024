@@ -234,6 +234,9 @@ int main(int argc, char *argv[]) {
     time_per_iteration = elapsed / iteration;
   }
 
+  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
+
+
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
 // =============================================================================
 // =============================================================================
