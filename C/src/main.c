@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
 
     // int outdegrees[GRAPH_ORDER];
 
-    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank, reduc)
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
       #pragma omp parallel for shared(new_pagerank)
@@ -225,6 +225,7 @@ int main(int argc, char *argv[]) {
       printf(
           "[ERROR] Iteration %zu: sum of all pageranks is not 1 but %.12f.\n",
           iteration, pagerank_total);
+          return 1;
     }
 
     double iteration_end = omp_get_wtime();
