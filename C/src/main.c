@@ -182,7 +182,9 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    #pragma omp target teams distribute parallel for shared(new_pagerank)
+    #pragma omp target update from(new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
+
+    // #pragma omp target teams distribute parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
@@ -192,7 +194,6 @@ int main(int argc, char *argv[]) {
     diff = 0.0;
     // #pragma omp target parallel for shared(adjacency_matrix)
     // reduction(+:diff) schedule(static)
-    #pragma omp target update from(new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
@@ -207,7 +208,7 @@ int main(int argc, char *argv[]) {
 
     // ===========
     // ON HOST or DEVICE??
-    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank)
+    // #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
@@ -216,7 +217,7 @@ int main(int argc, char *argv[]) {
     // ON HOST
     double pagerank_total = 0.0;
     // #pragma omp parallel for shared(pagerank) reduction(+:pagerank_total) schedule(static)
-    #pragma omp target update from(pagerank[0:GRAPH_ORDER])
+    // #pragma omp target update from(pagerank[0:GRAPH_ORDER])
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank_total += pagerank[i];
     }
