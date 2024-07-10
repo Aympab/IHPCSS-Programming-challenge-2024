@@ -149,14 +149,7 @@ int main(int argc, char *argv[]) {
 
   // #pragma omp target parallel for map(to:initial_rank) shared(pagerank)
   // schedule(static)
-  // //Do I really need this?
-  // for (int i = 0; i < GRAPH_ORDER; i++) {
-  //   new_pagerank[i] = 0.0;
-  // }
 
-  // If we exceeded the MAX_TIME seconds, we stop. If we typically spend X
-  // seconds on an iteration, and we are less than X seconds away from MAX_TIME,
-  // we stop.
 // #pragma omp target data map(tofrom : adjacency_matrix, new_pagerank, pagerank, \
 //                                 diff, damping_value, max_diff, min_diff,       \
 //                                 total_diff)
@@ -171,10 +164,13 @@ int main(int argc, char *argv[]) {
       new_pagerank[i] = 0.0;
     }
 
-    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank)
+
+    // int outdegrees[GRAPH_ORDER];
+
+    #pragma omp target teams distribute map(tofrom:adjacency_matrix, new_pagerank, pagerank, reduc)
     for (int i = 0; i < GRAPH_ORDER; i++) {
-      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank,
-      // pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
+      // #pragma omp parallel for shared(adjacency_matrix, new_pagerank, pagerank) firstprivate(i) reduction(+:new_pagerank[i]) schedule(static)
+      #pragma omp parallel for shared(new_pagerank)
       for (int j = 0; j < GRAPH_ORDER; j++) {
         if (adjacency_matrix[j][i] == 1.0) {
           int outdegree = 0;
