@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
   double new_pagerank[GRAPH_ORDER];
 
 
-  // #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
+  #pragma omp target enter data map(alloc:adjacency_matrix, new_pagerank, pagerank)
   //ADD NO WAIT TO THE UPDATE
   // #pragma omp u 
 
@@ -156,7 +156,7 @@ int main(int argc, char *argv[]) {
     
     //=========
     // On DEVICE
-    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = 0.0;
     }
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    // #pragma omp target parallel for shared(new_pagerank) schedule(static)
+    #pragma omp target teams distribute parallel for shared(new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
@@ -192,6 +192,7 @@ int main(int argc, char *argv[]) {
     diff = 0.0;
     // #pragma omp target parallel for shared(adjacency_matrix)
     // reduction(+:diff) schedule(static)
+    #pragma omp target update from(new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
     for (int i = 0; i < GRAPH_ORDER; i++) {
       diff += fabs(new_pagerank[i] - pagerank[i]);
     }
@@ -205,8 +206,8 @@ int main(int argc, char *argv[]) {
 
 
     // ===========
-    // ON HOST
-    // #pragma omp parallel for shared(adjacency_matrix, pagerank) schedule(static)
+    // ON HOST or DEVICE??
+    #pragma omp target teams distribute parallel for shared(new_pagerank, pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       pagerank[i] = new_pagerank[i];
     }
@@ -234,6 +235,9 @@ int main(int argc, char *argv[]) {
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
 // =============================================================================
 // =============================================================================
+
+
+  /* Need UPDATE FROM device to host before verification*/
 
 
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
