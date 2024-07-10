@@ -234,7 +234,6 @@ int main(int argc, char *argv[]) {
     time_per_iteration = elapsed / iteration;
   }
 
-  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
 
 
   printf("%zu iterations achieved in %.2f seconds\n", iteration, elapsed);
@@ -245,13 +244,15 @@ int main(int argc, char *argv[]) {
   /* Need UPDATE FROM device to host before verification*/
 
 
+
   // Calculates the sum of all pageranks. It should be 1.0, so it can be used as
   // a quick verification.
   double sum_ranks = 0.0;
 
   // #pragma omp target parallel for shared(pagerank) reduction(+:sum_ranks)
-  // schedule(static)
+
   for (int i = 0; i < GRAPH_ORDER; i++) {
+  #pragma omp target update from(pagerank[0:GRAPH_ORDER])
     if (i % 100 == 0) {
       printf("PageRank of vertex %d: %.6f\n", i, pagerank[i]);
     }
@@ -265,6 +266,9 @@ int main(int argc, char *argv[]) {
   printf("Total time taken: %.2f seconds.\n", end - start);
 
   // #pragma omp target exit data map(delete:adjacency_matrix, pagerank)
+
+
+  #pragma omp target exit data map(delete:adjacency_matrix, new_pagerank, pagerank)
 
   return 0;
 }
