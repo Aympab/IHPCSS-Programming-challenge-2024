@@ -184,6 +184,7 @@ int main(int argc, char *argv[]) {
     // #pragma omp target update from(new_pagerank[0:GRAPH_ORDER], pagerank[0:GRAPH_ORDER])
 
     // #pragma omp target teams distribute parallel for shared(new_pagerank)
+    #pragma omp target teams distribute parallel for shared(new_pagerank) map(tofrom:new_pagerank)
     for (int i = 0; i < GRAPH_ORDER; i++) {
       new_pagerank[i] = DAMPING_FACTOR * new_pagerank[i] + damping_value;
     }
